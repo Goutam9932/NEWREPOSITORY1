@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Booking System</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />
+    <style>
+        #calendar-container, #registration-container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Room Booking System</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <button id="open-calendar-btn" class="btn btn-primary">Open Calendar</button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div id="calendar-container" class="container mt-4">
+        <div id="calendar"></div>
+    </div>
+
+    <div id="registration-container" class="container mt-4">
+        <h2>Register Team</h2>
+        <form id="registration-form">
+            <div class="form-group">
+                <label for="reg-username">Username:</label>
+                <input type="text" class="form-control" id="reg-username" required>
+            </div>
+            <div class="form-group">
+                <label for="reg-password">Password:</label>
+                <input type="password" class="form-control" id="reg-password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+        <div id="registration-message" class="mt-2"></div>
+    </div>
+
+    <script>
+        document.getElementById("open-calendar-btn").onclick = function() {
+            document.getElementById("calendar-container").style.display = "block";
+            document.getElementById("registration-container").style.display = "none"; // Hide registration
+            
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                selectable: true,  // Enable date range selection
+                select: function(info) {
+                    var title = prompt('Enter room name for booking:');
+                    if (title) {
+                        // Format start and end using the FullCalendar info object
+                        var start = moment(info.start).format("YYYY-MM-DDTHH:mm:ss");
+                        var end = moment(info.end).format("YYYY-MM-DDTHH:mm:ss"); // Use the end time directly
+                        
+                        // Post the event to the backend
+                        fetch('/api/events', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ title: title, start: start, end: end }) // Ensure the JSON matches your backend expectations
+                        })
+                        .then(response => response.text())
+                        .then(message => {
+                            if (message === "Booking confirmed.") {
+                                calendar.addEvent({
+                                    title: title,
+                                    start: start,
+                                    end: end,
+                                    classNames: ['booked']
+                                });
+                                alert('Room booked successfully!');
+                            } else {
+                                alert(message);
+                            }
+                        })
+                        .catch(error => alert('Error booking room!'));
+                    }
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    var start = fetchInfo.startStr;
+                    var end = fetchInfo.endStr;
+                    // Fetch events from the backend within the selected date range
+                    fetch(`/api/events?start=${start}&end=${end}`)
+                        .then(response => response.json())
+                        .then(events => successCallback(events))
+                        .catch(error => failureCallback(error));
+                }
+            });
+            calendar.render();
+        };
+    </script>
+</body>
+</html>
