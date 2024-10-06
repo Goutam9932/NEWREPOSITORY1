@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>OTP Verification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet"> <!-- Using Google Fonts -->
+    <style>
+        /* Same CSS as before */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .otp-container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        button[type="submit"], #resendButton {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        button[type="submit"]:hover, #resendButton:hover {
+            box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
+        }
+
+        #resendButton {
+            background-color: #6c757d;
+            margin-top: 10px;
+        }
+
+        #resendButton[disabled] {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* Add this class for the green background */
+        .enabled-button {
+            background-color: #28a745 !important; /* Green color */
+        }
+
+        #timer {
+            font-size: 18px;
+            color: #007bff;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .otp-container {
+                padding: 20px;
+                margin: 0 10px;
+            }
+        }
+    </style>
+
+    <script>
+        let timer;
+        let countdown = 120; // 2 minutes countdown
+
+        function startTimer() {
+            timer = setInterval(function () {
+                let minutes = Math.floor(countdown / 60);
+                let seconds = countdown % 60;
+                document.getElementById("timer").innerHTML = minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
+
+                countdown--;
+                if (countdown < 0) {
+                    clearInterval(timer);
+                    document.getElementById("resendButton").disabled = false; // Enable resend button
+                    document.getElementById("resendButton").classList.add("enabled-button"); // Change color to green
+                }
+            }, 1000);
+        }
+
+        window.onload = function () {
+            startTimer(); // Start the countdown timer when the page loads
+        };
+         function resendOtp() {
+            // Trigger the resend OTP via the backend
+            fetch('/otp/send', { method: 'POST' })
+                
+        }
+    </script>
+</head>
+<body>
+    <div class="otp-container">
+        <h2>OTP Verification</h2>
+        <form th:action="@{/otp}" method="post">
+            <input type="text" name="otp" placeholder="Enter OTP" required />
+            <button type="submit" id="submitButton">Submit</button>
+        </form>
+
+        <div id="timer">2:00</div> <!-- Timer display -->
+
+<button id="resendButton" onclick="resendOtp()" disabled>Resend OTP</button> <!-- Resend OTP button -->
+        <div th:if="${param.error}" class="error-message">
+            <p>Invalid OTP. Please try again.</p>
+        </div>
+    </div>
+</body>
+</html>
